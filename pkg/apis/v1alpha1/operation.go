@@ -1,7 +1,7 @@
 package v1alpha1
 
-// Operation defines a single operation, only one action is permitted for a given operation.
-type Operation struct {
+// OperationBase defines common elements to all operations.
+type OperationBase struct {
 	// Description contains a description of the operation.
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -10,6 +10,13 @@ type Operation struct {
 	// Even if the test continues executing, it will still be reported as failed.
 	// +optional
 	ContinueOnError *bool `json:"continueOnError,omitempty"`
+}
+
+// Operation defines a single operation, only one action is permitted for a given operation.
+type Operation struct {
+	// OperationBase defines common elements to all operations.
+	// +optional
+	OperationBase `json:",inline"`
 
 	// Apply represents resources that should be applied for this test step. This can include things
 	// like configuration settings or any other resources that need to be available during the test.
@@ -32,14 +39,34 @@ type Operation struct {
 	// +optional
 	Delete *Delete `json:"delete,omitempty"`
 
+	// Describe determines the resource describe collector to execute.
+	// +optional
+	Describe *Describe `json:"describe,omitempty"`
+
 	// Error represents the expected errors for this test step. If any of these errors occur, the test
 	// will consider them as expected; otherwise, they will be treated as test failures.
 	// +optional
 	Error *Error `json:"error,omitempty"`
 
+	// Events determines the events collector to execute.
+	// +optional
+	Events *Events `json:"events,omitempty"`
+
+	// Get determines the resource get collector to execute.
+	// +optional
+	Get *Get `json:"get,omitempty"`
+
 	// Patch represents a patch operation.
 	// +optional
 	Patch *Patch `json:"patch,omitempty"`
+
+	// PodLogs determines the pod logs collector to execute.
+	// +optional
+	PodLogs *PodLogs `json:"podLogs,omitempty"`
+
+	// Proxy runs a proxy request.
+	// +optional
+	Proxy *Proxy `json:"proxy,omitempty"`
 
 	// Script defines a script to run.
 	// +optional
@@ -70,10 +97,20 @@ func (o *Operation) Bindings() []Binding {
 		return o.Create.Bindings
 	case o.Delete != nil:
 		return o.Delete.Bindings
+	case o.Describe != nil:
+		return nil
 	case o.Error != nil:
 		return o.Error.Bindings
+	case o.Events != nil:
+		return nil
+	case o.Get != nil:
+		return nil
 	case o.Patch != nil:
 		return o.Patch.Bindings
+	case o.PodLogs != nil:
+		return nil
+	case o.Proxy != nil:
+		return nil
 	case o.Script != nil:
 		return o.Script.Bindings
 	case o.Sleep != nil:
@@ -98,10 +135,20 @@ func (o *Operation) Outputs() []Output {
 		return o.Create.Outputs
 	case o.Delete != nil:
 		return nil
+	case o.Describe != nil:
+		return nil
 	case o.Error != nil:
+		return nil
+	case o.Events != nil:
+		return nil
+	case o.Get != nil:
 		return nil
 	case o.Patch != nil:
 		return o.Patch.Outputs
+	case o.PodLogs != nil:
+		return nil
+	case o.Proxy != nil:
+		return o.Proxy.Outputs
 	case o.Script != nil:
 		return o.Script.Outputs
 	case o.Sleep != nil:

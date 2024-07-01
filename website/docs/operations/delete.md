@@ -1,45 +1,51 @@
 # Delete
 
-The `delete` operation allows you to specify resources that should be deleted from the Kubernetes cluster before a particular test step is executed.
+The `delete` operation defines resources that should be deleted from a Kubernetes cluster.
+
+!!! warning
+    The propagation policy is forced to `Background` because some types default to `Orphan` (this is the case for unmanaged jobs for example) and we don't want to let dangling pods run in the cluster after cleanup.
 
 ## Configuration
 
-!!! tip "Reference documentation"
-    - The full structure of the `Delete` is documented [here](../apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Delete).
-    - This operation supports [bindings](../bindings/index.md).
+The full structure of the `Delete` is documented [here](../reference/apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Delete).
 
-## Usage examples
+### Features
 
-Below is an example of using `delete` in a `Test` resource.
+| Supported features                                 |                    |
+|----------------------------------------------------|:------------------:|
+| [Bindings](../general/bindings.md) support         | :white_check_mark: |
+| [Outputs](../general/outputs.md) support           | :x:                |
+| [Templating](../general/templating.md) support     | :white_check_mark: |
+| [Operation checks](../general/checks.md) support   | :white_check_mark: |
 
-!!! example
+## Examples
 
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example
-    spec:
-      steps:
-      - try:
-        # ...
-        - delete:
-            ref:
-              apiVersion: v1
-              kind: Pod
-              namespace: default
-              name: my-test-pod
-        # ...
-    ```
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - delete:
+        ref:
+          apiVersion: v1
+          kind: Pod
+          namespace: default
+          name: my-test-pod
+```
 
-## Operation check
+### Operation check
 
-Below is an example of using an [operation check](./check.md#delete).
-
-!!! example "With check"
-
-    ```yaml
-    # ...
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
     - delete:
         ref:
           apiVersion: v1
@@ -60,5 +66,4 @@ Below is an example of using an [operation check](./check.md#delete).
             # - succeed if the operation failed
             # - fail if the operation succeeded
             ($error != null): true
-    # ...
-    ```
+```

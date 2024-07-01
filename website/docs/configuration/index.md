@@ -1,27 +1,27 @@
 # Configuring Chainsaw
 
-Chainsaw is a comprehensive tool designed to facilitate **end-to-end testing in [Kubernetes](https://kubernetes.io)**.
-
-This documentation will focus on providing a breakdown of its configuration structure and how to use it.
+This documentation focuses on providing a breakdown of the Chainsaw configuration structure and how to use it.
 
 Chainsaw can be configured in two different and complementary ways:
 
 - [Using a configuration file](./file.md)
 - [Overriding configuration with command-line flags](./flags.md)
 
-!!! note "Precedence"
-    If both are specified, **command-line flags will take precedence** over configuration coming from a configuration file.
-
 ## Specific configuration options
 
 Please pay attention to the configuration options below, they may or may not be relevant in your case but can be useful in certain cases:
 
-- [Timeouts](./timeouts.md)
-- [Termination graceful period](./grace.md)
-- [Delay before cleanup](./cleanup-delay.md)
-- [Creating test reports](./reports.md)
-- [Label selectors](./selector.md)
-- [Passing arbitrary values to tests](./values.md)
-- [Multi cluster](./multi-cluster.md)
-- [Resource templating](./templating.md)
-- [Running without a cluster](./no-cluster.md)
+- [Timeouts](./options/timeouts.md)
+- [Discovery options](./options/discovery.md)
+- [Execution options](./options/execution.md)
+- [Namespace options](./options/namespace.md)
+- [Templating options](./options/templating.md)
+- [Cleanup options](./options/cleanup.md)
+- [Deletion options](./options/deletion.md)
+- [Error options](./options/error.md)
+- [Reporting options](./options/report.md)
+- [Multi-cluster options](./options/clusters.md)
+- [Pause options](./options/no-cluster.md)
+- [No cluster options](./options/no-cluster.md)
+- [Label selectors](./options/label-selectors.md)
+- [External values](./options/values.md)

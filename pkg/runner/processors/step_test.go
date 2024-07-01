@@ -34,8 +34,7 @@ func TestStepProcessor_Run(t *testing.T) {
 		clock        clock.PassiveClock
 		test         discovery.Test
 		stepSpec     v1alpha1.TestStep
-		stepReport   *report.TestSpecStepReport
-		cleaner      *cleaner
+		stepReport   *report.StepReport
 		expectedFail bool
 		skipped      bool
 	}{{
@@ -62,12 +61,11 @@ func TestStepProcessor_Run(t *testing.T) {
 			TestStepSpec: v1alpha1.TestStepSpec{
 				Timeouts: &v1alpha1.Timeouts{},
 				Try:      []v1alpha1.Operation{},
-				Catch:    []v1alpha1.Catch{},
-				Finally:  []v1alpha1.Finally{},
+				Catch:    []v1alpha1.CatchFinally{},
+				Finally:  []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "try operation with apply handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -102,7 +100,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Apply: &v1alpha1.Apply{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
@@ -110,12 +108,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with create handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -150,7 +147,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
@@ -158,12 +155,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with assert handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -222,7 +218,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Assert: &v1alpha1.Assert{
-							FileRefOrCheck: v1alpha1.FileRefOrCheck{
+							ActionCheckRef: v1alpha1.ActionCheckRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
@@ -230,12 +226,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with error handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -294,7 +289,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Error: &v1alpha1.Error{
-							FileRefOrCheck: v1alpha1.FileRefOrCheck{
+							ActionCheckRef: v1alpha1.ActionCheckRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
@@ -302,12 +297,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with command handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -343,12 +337,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with script handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -383,12 +376,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with sleep handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -416,12 +408,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "try operation with delete handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -453,12 +444,12 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Delete: &v1alpha1.Delete{
-							ObjectReference: v1alpha1.ObjectReference{
+							Ref: &v1alpha1.ObjectReference{
 								ObjectType: v1alpha1.ObjectType{
 									APIVersion: "apps/v1",
 									Kind:       "Deployment",
 								},
-								ObjectSelector: v1alpha1.ObjectSelector{
+								ObjectName: v1alpha1.ObjectName{
 									Namespace: "chainsaw",
 									Name:      "myapp",
 								},
@@ -466,12 +457,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "dry run with create handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -506,21 +496,22 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
 							},
-							DryRun: ptr.To[bool](true),
+							ActionDryRun: v1alpha1.ActionDryRun{
+								DryRun: ptr.To[bool](true),
+							},
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "skip delete with create handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -556,7 +547,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
@@ -564,12 +555,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "try-raw resource with create handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -605,7 +595,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								Resource: &unstructured.Unstructured{
 									Object: map[string]any{
 										"apiVersion": "v1",
@@ -619,12 +609,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "try-url resource with create handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -660,7 +649,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "https://raw.githubusercontent.com/kyverno/chainsaw/main/testdata/test/configmap.yaml",
 								},
@@ -668,12 +657,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "raw resource with assert handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -732,7 +720,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Assert: &v1alpha1.Assert{
-							FileRefOrCheck: v1alpha1.FileRefOrCheck{
+							ActionCheckRef: v1alpha1.ActionCheckRef{
 								Check: &v1alpha1.Check{
 									Value: map[string]any{
 										"apiVersion": "v1",
@@ -763,12 +751,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "try url-resource with assert handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -813,7 +800,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Assert: &v1alpha1.Assert{
-							FileRefOrCheck: v1alpha1.FileRefOrCheck{
+							ActionCheckRef: v1alpha1.ActionCheckRef{
 								FileRef: v1alpha1.FileRef{
 									File: "https://raw.githubusercontent.com/kyverno/chainsaw/main/testdata/test/configmap.yaml",
 								},
@@ -821,12 +808,11 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}, {
 		name: "try, catch and finally operation with apply handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -890,7 +876,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Apply: &v1alpha1.Apply{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "pod.yaml",
 								},
@@ -898,14 +884,13 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch: []v1alpha1.Catch{
+				Catch: []v1alpha1.CatchFinally{
 					{
 						Command: &v1alpha1.Command{
 							Entrypoint: "echo",
 							Args:       []string{"hello"},
 						},
 					},
-
 					{
 						Script: &v1alpha1.Script{
 							Content: "echo hello",
@@ -918,27 +903,19 @@ func TestStepProcessor_Run(t *testing.T) {
 					},
 					{
 						PodLogs: &v1alpha1.PodLogs{
-							ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-								Selector: "name=myapp",
-							},
-						},
-					},
-					{
-						Events: &v1alpha1.Events{
-							ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
+							ActionObjectSelector: v1alpha1.ActionObjectSelector{
 								Selector: "name=myapp",
 							},
 						},
 					},
 				},
-				Finally: []v1alpha1.Finally{
+				Finally: []v1alpha1.CatchFinally{
 					{
 						Command: &v1alpha1.Command{
 							Entrypoint: "echo",
 							Args:       []string{"hello"},
 						},
 					},
-
 					{
 						Script: &v1alpha1.Script{
 							Content: "echo hello",
@@ -951,14 +928,7 @@ func TestStepProcessor_Run(t *testing.T) {
 					},
 					{
 						PodLogs: &v1alpha1.PodLogs{
-							ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-								Selector: "name=myapp",
-							},
-						},
-					},
-					{
-						Events: &v1alpha1.Events{
-							ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
+							ActionObjectSelector: v1alpha1.ActionObjectSelector{
 								Selector: "name=myapp",
 							},
 						},
@@ -966,8 +936,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				},
 			},
 		},
-		stepReport: report.NewTestSpecStep("fake"),
-		cleaner:    &cleaner{},
+		stepReport: &report.StepReport{},
 	}, {
 		name: "termination with create handler",
 		config: v1alpha1.ConfigurationSpec{
@@ -1003,7 +972,7 @@ func TestStepProcessor_Run(t *testing.T) {
 				Try: []v1alpha1.Operation{
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "deployment.yaml",
 								},
@@ -1012,7 +981,7 @@ func TestStepProcessor_Run(t *testing.T) {
 					},
 					{
 						Create: &v1alpha1.Create{
-							FileRefOrResource: v1alpha1.FileRefOrResource{
+							ActionResourceRef: v1alpha1.ActionResourceRef{
 								FileRef: v1alpha1.FileRef{
 									File: "cron-job.yaml",
 								},
@@ -1020,30 +989,26 @@ func TestStepProcessor_Run(t *testing.T) {
 						},
 					},
 				},
-				Catch:   []v1alpha1.Catch{},
-				Finally: []v1alpha1.Finally{},
+				Catch:   []v1alpha1.CatchFinally{},
+				Finally: []v1alpha1.CatchFinally{},
 			},
 		},
 		stepReport: nil,
-		cleaner:    &cleaner{},
 	}}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			clusters := NewClusters()
+			registry := registryMock{}
 			if tc.client != nil {
-				clusters.clients[DefaultClient] = cluster{
-					client: tc.client,
-				}
+				registry.client = tc.client
 			}
 			stepProcessor := NewStepProcessor(
 				tc.config,
-				clusters,
+				registry,
 				tc.namespacer,
 				tc.clock,
 				tc.test,
 				tc.stepSpec,
 				tc.stepReport,
-				tc.cleaner,
 			)
 			nt := &testing.MockT{}
 			ctx := testing.IntoContext(context.Background(), nt)

@@ -9,7 +9,7 @@ import (
 	"github.com/kyverno/chainsaw/pkg/apis/v1alpha1"
 	internalloader "github.com/kyverno/chainsaw/pkg/internal/loader"
 	tloader "github.com/kyverno/chainsaw/pkg/internal/loader/testing"
-	"github.com/kyverno/kyverno/ext/resource/loader"
+	"github.com/kyverno/pkg/ext/resource/loader"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -70,25 +70,29 @@ func TestLoad(t *testing.T) {
 					TestStepSpec: v1alpha1.TestStepSpec{
 						Try: []v1alpha1.Operation{{
 							Apply: &v1alpha1.Apply{
-								FileRefOrResource: v1alpha1.FileRefOrResource{
+								ActionResourceRef: v1alpha1.ActionResourceRef{
 									FileRef: v1alpha1.FileRef{
 										File: "foo.yaml",
 									},
 								},
 							},
 						}},
-						Catch: []v1alpha1.Catch{{
+						Catch: []v1alpha1.CatchFinally{{
 							PodLogs: &v1alpha1.PodLogs{
-								ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-									Namespace: "foo",
-									Name:      "bar",
+								ActionObjectSelector: v1alpha1.ActionObjectSelector{
+									ObjectName: v1alpha1.ObjectName{
+										Namespace: "foo",
+										Name:      "bar",
+									},
 								},
 							},
 						}, {
 							Events: &v1alpha1.Events{
-								ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-									Namespace: "foo",
-									Name:      "bar",
+								ActionObjectSelector: v1alpha1.ActionObjectSelector{
+									ObjectName: v1alpha1.ObjectName{
+										Namespace: "foo",
+										Name:      "bar",
+									},
 								},
 							},
 						}, {
@@ -105,25 +109,29 @@ func TestLoad(t *testing.T) {
 					TestStepSpec: v1alpha1.TestStepSpec{
 						Try: []v1alpha1.Operation{{
 							Assert: &v1alpha1.Assert{
-								FileRefOrCheck: v1alpha1.FileRefOrCheck{
+								ActionCheckRef: v1alpha1.ActionCheckRef{
 									FileRef: v1alpha1.FileRef{
 										File: "bar.yaml",
 									},
 								},
 							},
 						}},
-						Finally: []v1alpha1.Finally{{
+						Finally: []v1alpha1.CatchFinally{{
 							PodLogs: &v1alpha1.PodLogs{
-								ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-									Namespace: "foo",
-									Name:      "bar",
+								ActionObjectSelector: v1alpha1.ActionObjectSelector{
+									ObjectName: v1alpha1.ObjectName{
+										Namespace: "foo",
+										Name:      "bar",
+									},
 								},
 							},
 						}, {
 							Events: &v1alpha1.Events{
-								ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-									Namespace: "foo",
-									Name:      "bar",
+								ActionObjectSelector: v1alpha1.ActionObjectSelector{
+									ObjectName: v1alpha1.ObjectName{
+										Namespace: "foo",
+										Name:      "bar",
+									},
 								},
 							},
 						}, {
@@ -181,7 +189,7 @@ func TestLoad(t *testing.T) {
 					TestStepSpec: v1alpha1.TestStepSpec{
 						Try: []v1alpha1.Operation{{
 							Apply: &v1alpha1.Apply{
-								FileRefOrResource: v1alpha1.FileRefOrResource{
+								ActionResourceRef: v1alpha1.ActionResourceRef{
 									Resource: &cm,
 								},
 							},
@@ -191,7 +199,7 @@ func TestLoad(t *testing.T) {
 					TestStepSpec: v1alpha1.TestStepSpec{
 						Try: []v1alpha1.Operation{{
 							Create: &v1alpha1.Create{
-								FileRefOrResource: v1alpha1.FileRefOrResource{
+								ActionResourceRef: v1alpha1.ActionResourceRef{
 									Resource: &cm,
 								},
 							},
@@ -203,7 +211,7 @@ func TestLoad(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Load(tt.path)
+			got, err := Load(tt.path, false)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -280,7 +288,7 @@ func Test_parse(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parse(content, tt.splitter, tt.loaderFactory, tt.converter, tt.validator)
+			_, err := parse(content, false, tt.splitter, tt.loaderFactory, tt.converter, tt.validator)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -295,7 +303,7 @@ func Test_parse_globalErr(t *testing.T) {
 	assert.NoError(t, err)
 	internalloader.Err = errors.New("dummy error")
 	{
-		_, err := parse(content, nil, nil, nil, nil)
+		_, err := parse(content, false, nil, nil, nil, nil)
 		assert.Error(t, err)
 	}
 }

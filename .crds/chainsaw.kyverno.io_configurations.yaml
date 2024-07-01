@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: configurations.chainsaw.kyverno.io
 spec:
   group: chainsaw.kyverno.io
@@ -21,14 +21,19 @@ spec:
           used to run tests.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -36,11 +41,12 @@ spec:
             description: Configuration spec.
             properties:
               catch:
-                description: Catch defines what the tests steps will execute when
-                  an error happens. This will be combined with catch handlers defined
-                  at the test and step levels.
+                description: |-
+                  Catch defines what the tests steps will execute when an error happens.
+                  This will be combined with catch handlers defined at the test and step levels.
                 items:
-                  description: Catch defines actions to be executed on failure.
+                  description: CatchFinally defines actions to be executed in catch,
+                    finally and cleanup blocks.
                   properties:
                     command:
                       description: Command defines a command to run.
@@ -77,6 +83,24 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         entrypoint:
                           description: Entrypoint is the command entry point to run.
                           type: string
@@ -157,13 +181,41 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
+                        deletionPropagationPolicy:
+                          description: |-
+                            DeletionPropagationPolicy decides if a deletion will propagate to the dependents of
+                            the object, and how the garbage collector will handle the propagation.
+                            Overrides the deletion propagation policy set in the Configuration, the Test and the TestStep.
+                          enum:
+                          - Orphan
+                          - Background
+                          - Foreground
+                          type: string
                         expect:
                           description: Expect defines a list of matched checks to
                             validate the operation outcome.
                           items:
-                            description: Expectation represents a check to be applied
-                              on the result of an operation with a match filter to
-                              determine if the verification should be considered.
+                            description: |-
+                              Expectation represents a check to be applied on the result of an operation
+                              with a match filter to determine if the verification should be considered.
                             properties:
                               check:
                                 description: Check defines the verification statement.
@@ -177,14 +229,22 @@ spec:
                             - check
                             type: object
                           type: array
+                        file:
+                          description: |-
+                            File is the path to the referenced file. This can be a direct path to a file
+                            or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                            files within the "manifest" directory.
+                          type: string
                         ref:
-                          description: ObjectReference determines objects to be deleted.
+                          description: Ref determines objects to be deleted.
                           properties:
                             apiVersion:
                               description: API version of the referent.
                               type: string
                             kind:
-                              description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              description: |-
+                                Kind of the referent.
+                                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                               type: string
                             labels:
                               additionalProperties:
@@ -192,11 +252,14 @@ spec:
                               description: Label selector to match objects to delete
                               type: object
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                               type: string
                             namespace:
-                              description: 'Namespace of the referent. More info:
-                                https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                              description: |-
+                                Namespace of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                               type: string
                           required:
                           - apiVersion
@@ -210,8 +273,6 @@ spec:
                           description: Timeout for the operation. Overrides the global
                             timeout set in the Configuration.
                           type: string
-                      required:
-                      - ref
                       type: object
                     describe:
                       description: Describe determines the resource describe collector
@@ -224,17 +285,38 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         kind:
-                          description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
-                          type: string
-                        resource:
-                          description: Resource name of the referent.
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         selector:
                           description: Selector defines labels selector.
@@ -247,6 +329,9 @@ spec:
                           description: Timeout for the operation. Overrides the global
                             timeout set in the Configuration.
                           type: string
+                      required:
+                      - apiVersion
+                      - kind
                       type: object
                     description:
                       description: Description contains a description of the operation.
@@ -258,16 +343,38 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         format:
                           description: Format determines the output format (json or
                             yaml).
                           pattern: ^(?:json|yaml|\(.+\))$
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         selector:
                           description: Selector defines labels selector.
@@ -287,22 +394,43 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         format:
                           description: Format determines the output format (json or
                             yaml).
                           pattern: ^(?:json|yaml|\(.+\))$
                           type: string
                         kind:
-                          description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
-                          type: string
-                        resource:
-                          description: Resource name of the referent.
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         selector:
                           description: Selector defines labels selector.
@@ -311,6 +439,9 @@ spec:
                           description: Timeout for the operation. Overrides the global
                             timeout set in the Configuration.
                           type: string
+                      required:
+                      - apiVersion
+                      - kind
                       type: object
                     podLogs:
                       description: PodLogs determines the pod logs collector to execute.
@@ -319,23 +450,45 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         container:
                           description: Container in pod to get logs from else --all-containers
                             is used.
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         selector:
                           description: Selector defines labels selector.
                           type: string
                         tail:
-                          description: Tail is the number of last lines to collect
-                            from pods. If omitted or zero, then the default is 10
-                            if you use a selector, or -1 (all) if you use a pod name.
+                          description: |-
+                            Tail is the number of last lines to collect from pods. If omitted or zero,
+                            then the default is 10 if you use a selector, or -1 (all) if you use a pod name.
                             This matches default behavior of `kubectl logs`.
                           type: integer
                         timeout:
@@ -373,6 +526,24 @@ spec:
                           description: Cluster defines the target cluster (default
                             cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         content:
                           description: Content defines a shell script (run with "sh
                             -c ...").
@@ -444,12 +615,29 @@ spec:
                           description: API version of the referent.
                           type: string
                         cluster:
-                          description: Cluster defines the target cluster where the
-                            wait operation will be performed (default cluster will
-                            be used if not specified).
+                          description: Cluster defines the target cluster (default
+                            cluster will be used if not specified and/or overridden).
                           type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
                         for:
-                          description: For specifies the condition to wait for.
+                          description: WaitFor specifies the condition to wait for.
                           properties:
                             condition:
                               description: Condition specifies the condition to wait
@@ -470,6 +658,22 @@ spec:
                               description: Deletion specifies parameters for waiting
                                 on a resource's deletion.
                               type: object
+                            jsonPath:
+                              description: JsonPath specifies the json path condition
+                                to wait for.
+                              properties:
+                                path:
+                                  description: Path defines the json path to wait
+                                    for, e.g. '{.status.phase}'.
+                                  type: string
+                                value:
+                                  description: Value defines the expected value to
+                                    wait for, e.g., "Running".
+                                  type: string
+                              required:
+                              - path
+                              - value
+                              type: object
                           type: object
                         format:
                           description: Format determines the output format (json or
@@ -477,31 +681,37 @@ spec:
                           pattern: ^(?:json|yaml|\(.+\))$
                           type: string
                         kind:
-                          description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
-                          type: string
-                        resource:
-                          description: Resource name of the referent.
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         selector:
                           description: Selector defines labels selector.
                           type: string
                         timeout:
-                          description: Timeout for the operation. Specifies how long
-                            to wait for the condition to be met before timing out.
+                          description: Timeout for the operation. Overrides the global
+                            timeout set in the Configuration.
                           type: string
                       required:
+                      - apiVersion
                       - for
+                      - kind
                       type: object
                   type: object
                 type: array
               clusters:
                 additionalProperties:
+                  description: Cluster defines cluster config and context.
                   properties:
                     context:
                       description: Context is the name of the context to use.
@@ -518,6 +728,16 @@ spec:
               delayBeforeCleanup:
                 description: DelayBeforeCleanup adds a delay between the time a test
                   ends and the time cleanup starts.
+                type: string
+              deletionPropagationPolicy:
+                default: Background
+                description: |-
+                  DeletionPropagationPolicy decides if a deletion will propagate to the dependents of
+                  the object, and how the garbage collector will handle the propagation.
+                enum:
+                - Orphan
+                - Background
+                - Foreground
                 type: string
               excludeTestRegex:
                 description: ExcludeTestRegex is used to exclude tests based on a
@@ -540,8 +760,9 @@ spec:
                   regular expression.
                 type: string
               namespace:
-                description: Namespace defines the namespace to use for tests. If
-                  not specified, every test will execute in a random ephemeral namespace
+                description: |-
+                  Namespace defines the namespace to use for tests.
+                  If not specified, every test will execute in a random ephemeral namespace
                   unless the namespace is overridden in a the test spec.
                 type: string
               namespaceTemplate:
@@ -561,9 +782,9 @@ spec:
                 minimum: 1
                 type: integer
               reportFormat:
-                description: ReportFormat determines test report format (JSON|XML|nil)
-                  nil == no report. maps to report.Type, however we don't want generated.deepcopy
-                  to have reference to it.
+                description: |-
+                  ReportFormat determines test report format (JSON|XML|nil) nil == no report.
+                  maps to report.Type, however we don't want generated.deepcopy to have reference to it.
                 enum:
                 - JSON
                 - XML
@@ -586,9 +807,9 @@ spec:
                 type: boolean
               testFile:
                 default: chainsaw-test
-                description: TestFile is the name of the file containing the test
-                  to run. If no extension is provided, chainsaw will try with .yaml
-                  first and .yml if needed.
+                description: |-
+                  TestFile is the name of the file containing the test to run.
+                  If no extension is provided, chainsaw will try with .yaml first and .yml if needed.
                 type: string
               timeouts:
                 description: Global timeouts configuration. Applies to all tests/test
@@ -619,3 +840,936 @@ spec:
         type: object
     served: true
     storage: true
+  - name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: Configuration is the resource that contains the configuration
+          used to run tests.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Configuration spec.
+            properties:
+              cleanup:
+                description: Cleanup contains cleanup configuration.
+                properties:
+                  delayBeforeCleanup:
+                    description: DelayBeforeCleanup adds a delay between the time
+                      a test ends and the time cleanup starts.
+                    type: string
+                  skipDelete:
+                    description: If set, do not delete the resources after running
+                      a test.
+                    type: boolean
+                type: object
+              clusters:
+                additionalProperties:
+                  description: Cluster defines cluster config and context.
+                  properties:
+                    context:
+                      description: Context is the name of the context to use.
+                      type: string
+                    kubeconfig:
+                      description: Kubeconfig is the path to the referenced file.
+                      type: string
+                  required:
+                  - kubeconfig
+                  type: object
+                description: Clusters holds a registry to clusters to support multi-cluster
+                  tests.
+                type: object
+              deletion:
+                default: {}
+                description: Deletion contains the global deletion configuration.
+                properties:
+                  propagation:
+                    default: Background
+                    description: |-
+                      Propagation decides if a deletion will propagate to the dependents of
+                      the object, and how the garbage collector will handle the propagation.
+                    enum:
+                    - Orphan
+                    - Background
+                    - Foreground
+                    type: string
+                type: object
+              discovery:
+                default: {}
+                description: Discovery contains tests discovery configuration.
+                properties:
+                  excludeTestRegex:
+                    description: ExcludeTestRegex is used to exclude tests based on
+                      a regular expression.
+                    type: string
+                  fullName:
+                    description: FullName makes use of the full test case folder path
+                      instead of the folder name.
+                    type: boolean
+                  includeTestRegex:
+                    description: IncludeTestRegex is used to include tests based on
+                      a regular expression.
+                    type: string
+                  testFile:
+                    default: chainsaw-test
+                    description: |-
+                      TestFile is the name of the file containing the test to run.
+                      If no extension is provided, chainsaw will try with .yaml first and .yml if needed.
+                    type: string
+                type: object
+              error:
+                description: Error contains the global error configuration.
+                properties:
+                  catch:
+                    description: |-
+                      Catch defines what the tests steps will execute when an error happens.
+                      This will be combined with catch handlers defined at the test and step levels.
+                    items:
+                      description: Operation defines operation elements.
+                      properties:
+                        apply:
+                          description: |-
+                            Apply represents resources that should be applied for this test step. This can include things
+                            like configuration settings or any other resources that need to be available during the test.
+                          properties:
+                            dryRun:
+                              description: DryRun determines whether the file should
+                                be applied in dry run mode.
+                              type: boolean
+                            expect:
+                              description: Expect defines a list of matched checks
+                                to validate the operation outcome.
+                              items:
+                                description: |-
+                                  Expectation represents a check to be applied on the result of an operation
+                                  with a match filter to determine if the verification should be considered.
+                                properties:
+                                  check:
+                                    description: Check defines the verification statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                  match:
+                                    description: Match defines the matching statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - check
+                                type: object
+                              type: array
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            resource:
+                              description: Resource provides a resource to be applied.
+                              type: object
+                              x-kubernetes-embedded-resource: true
+                              x-kubernetes-preserve-unknown-fields: true
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        assert:
+                          description: Assert represents an assertion to be made.
+                            It checks whether the conditions specified in the assertion
+                            hold true.
+                          properties:
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            resource:
+                              description: Check provides a check used in assertions.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        bindings:
+                          description: Bindings defines additional binding key/values.
+                          items:
+                            description: Binding represents a key/value set as a binding
+                              in an executing test.
+                            properties:
+                              name:
+                                description: Name the name of the binding.
+                                pattern: ^(?:\w+|\(.+\))$
+                                type: string
+                              value:
+                                description: Value value of the binding.
+                                x-kubernetes-preserve-unknown-fields: true
+                            required:
+                            - name
+                            - value
+                            type: object
+                          type: array
+                        cluster:
+                          description: Cluster defines the target cluster (default
+                            cluster will be used if not specified and/or overridden).
+                          type: string
+                        clusters:
+                          additionalProperties:
+                            description: Cluster defines cluster config and context.
+                            properties:
+                              context:
+                                description: Context is the name of the context to
+                                  use.
+                                type: string
+                              kubeconfig:
+                                description: Kubeconfig is the path to the referenced
+                                  file.
+                                type: string
+                            required:
+                            - kubeconfig
+                            type: object
+                          description: Clusters holds a registry to clusters to support
+                            multi-cluster tests.
+                          type: object
+                        command:
+                          description: Command defines a command to run.
+                          properties:
+                            args:
+                              description: Args is the command arguments.
+                              items:
+                                type: string
+                              type: array
+                            check:
+                              description: Check is an assertion tree to validate
+                                the operation outcome.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            entrypoint:
+                              description: Entrypoint is the command entry point to
+                                run.
+                              type: string
+                            env:
+                              description: Env defines additional environment variables.
+                              items:
+                                description: Binding represents a key/value set as
+                                  a binding in an executing test.
+                                properties:
+                                  name:
+                                    description: Name the name of the binding.
+                                    pattern: ^(?:\w+|\(.+\))$
+                                    type: string
+                                  value:
+                                    description: Value value of the binding.
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            skipLogOutput:
+                              description: SkipLogOutput removes the output from the
+                                command. Useful for sensitive logs or to reduce noise.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          required:
+                          - entrypoint
+                          type: object
+                        create:
+                          description: Create represents a creation operation.
+                          properties:
+                            dryRun:
+                              description: DryRun determines whether the file should
+                                be applied in dry run mode.
+                              type: boolean
+                            expect:
+                              description: Expect defines a list of matched checks
+                                to validate the operation outcome.
+                              items:
+                                description: |-
+                                  Expectation represents a check to be applied on the result of an operation
+                                  with a match filter to determine if the verification should be considered.
+                                properties:
+                                  check:
+                                    description: Check defines the verification statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                  match:
+                                    description: Match defines the matching statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - check
+                                type: object
+                              type: array
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            resource:
+                              description: Resource provides a resource to be applied.
+                              type: object
+                              x-kubernetes-embedded-resource: true
+                              x-kubernetes-preserve-unknown-fields: true
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        delete:
+                          description: Delete represents a deletion operation.
+                          properties:
+                            deletionPropagationPolicy:
+                              description: |-
+                                DeletionPropagationPolicy decides if a deletion will propagate to the dependents of
+                                the object, and how the garbage collector will handle the propagation.
+                                Overrides the deletion propagation policy set in the Configuration, the Test and the TestStep.
+                              enum:
+                              - Orphan
+                              - Background
+                              - Foreground
+                              type: string
+                            expect:
+                              description: Expect defines a list of matched checks
+                                to validate the operation outcome.
+                              items:
+                                description: |-
+                                  Expectation represents a check to be applied on the result of an operation
+                                  with a match filter to determine if the verification should be considered.
+                                properties:
+                                  check:
+                                    description: Check defines the verification statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                  match:
+                                    description: Match defines the matching statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - check
+                                type: object
+                              type: array
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            ref:
+                              description: Ref determines objects to be deleted.
+                              properties:
+                                apiVersion:
+                                  description: API version of the referent.
+                                  type: string
+                                kind:
+                                  description: |-
+                                    Kind of the referent.
+                                    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                                  type: string
+                                labelSelector:
+                                  description: Label selector to match objects to
+                                    delete
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements. The requirements are
+                                        ANDed.
+                                      items:
+                                        description: |-
+                                          A label selector requirement is a selector that contains values, a key, and an operator that
+                                          relates the key and values.
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: |-
+                                              operator represents a key's relationship to a set of values.
+                                              Valid operators are In, NotIn, Exists and DoesNotExist.
+                                            type: string
+                                          values:
+                                            description: |-
+                                              values is an array of string values. If the operator is In or NotIn,
+                                              the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                              the values array must be empty. This array is replaced during a strategic
+                                              merge patch.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: |-
+                                        matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                        map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                        operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                name:
+                                  description: |-
+                                    Name of the referent.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                namespace:
+                                  description: |-
+                                    Namespace of the referent.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                                  type: string
+                              required:
+                              - apiVersion
+                              - kind
+                              type: object
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        describe:
+                          description: Describe determines the resource describe collector
+                            to execute.
+                          properties:
+                            apiVersion:
+                              description: API version of the referent.
+                              type: string
+                            kind:
+                              description: |-
+                                Kind of the referent.
+                                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                              type: string
+                            name:
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            namespace:
+                              description: |-
+                                Namespace of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                              type: string
+                            selector:
+                              description: Selector defines labels selector.
+                              type: string
+                            showEvents:
+                              description: Show Events indicates whether to include
+                                related events.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          required:
+                          - apiVersion
+                          - kind
+                          type: object
+                        description:
+                          description: Description contains a description of the operation.
+                          type: string
+                        error:
+                          description: |-
+                            Error represents the expected errors for this test step. If any of these errors occur, the test
+                            will consider them as expected; otherwise, they will be treated as test failures.
+                          properties:
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            resource:
+                              description: Check provides a check used in assertions.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        events:
+                          description: Events determines the events collector to execute.
+                          properties:
+                            format:
+                              description: Format determines the output format (json
+                                or yaml).
+                              pattern: ^(?:json|yaml|\(.+\))$
+                              type: string
+                            name:
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            namespace:
+                              description: |-
+                                Namespace of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                              type: string
+                            selector:
+                              description: Selector defines labels selector.
+                              type: string
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        get:
+                          description: Get determines the resource get collector to
+                            execute.
+                          properties:
+                            apiVersion:
+                              description: API version of the referent.
+                              type: string
+                            format:
+                              description: Format determines the output format (json
+                                or yaml).
+                              pattern: ^(?:json|yaml|\(.+\))$
+                              type: string
+                            kind:
+                              description: |-
+                                Kind of the referent.
+                                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                              type: string
+                            name:
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            namespace:
+                              description: |-
+                                Namespace of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                              type: string
+                            selector:
+                              description: Selector defines labels selector.
+                              type: string
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          required:
+                          - apiVersion
+                          - kind
+                          type: object
+                        outputs:
+                          description: Outputs defines output bindings.
+                          items:
+                            description: Output represents an output binding with
+                              a match to determine if the binding must be considered
+                              or not.
+                            properties:
+                              match:
+                                description: Match defines the matching statement.
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              name:
+                                description: Name the name of the binding.
+                                pattern: ^(?:\w+|\(.+\))$
+                                type: string
+                              value:
+                                description: Value value of the binding.
+                                x-kubernetes-preserve-unknown-fields: true
+                            required:
+                            - name
+                            - value
+                            type: object
+                          type: array
+                        patch:
+                          description: Patch represents a patch operation.
+                          properties:
+                            dryRun:
+                              description: DryRun determines whether the file should
+                                be applied in dry run mode.
+                              type: boolean
+                            expect:
+                              description: Expect defines a list of matched checks
+                                to validate the operation outcome.
+                              items:
+                                description: |-
+                                  Expectation represents a check to be applied on the result of an operation
+                                  with a match filter to determine if the verification should be considered.
+                                properties:
+                                  check:
+                                    description: Check defines the verification statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                  match:
+                                    description: Match defines the matching statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - check
+                                type: object
+                              type: array
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            resource:
+                              description: Resource provides a resource to be applied.
+                              type: object
+                              x-kubernetes-embedded-resource: true
+                              x-kubernetes-preserve-unknown-fields: true
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        podLogs:
+                          description: PodLogs determines the pod logs collector to
+                            execute.
+                          properties:
+                            container:
+                              description: Container in pod to get logs from else
+                                --all-containers is used.
+                              type: string
+                            name:
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            namespace:
+                              description: |-
+                                Namespace of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                              type: string
+                            selector:
+                              description: Selector defines labels selector.
+                              type: string
+                            tail:
+                              description: |-
+                                Tail is the number of last lines to collect from pods. If omitted or zero,
+                                then the default is 10 if you use a selector, or -1 (all) if you use a pod name.
+                                This matches default behavior of `kubectl logs`.
+                              type: integer
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        script:
+                          description: Script defines a script to run.
+                          properties:
+                            check:
+                              description: Check is an assertion tree to validate
+                                the operation outcome.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            content:
+                              description: Content defines a shell script (run with
+                                "sh -c ...").
+                              type: string
+                            env:
+                              description: Env defines additional environment variables.
+                              items:
+                                description: Binding represents a key/value set as
+                                  a binding in an executing test.
+                                properties:
+                                  name:
+                                    description: Name the name of the binding.
+                                    pattern: ^(?:\w+|\(.+\))$
+                                    type: string
+                                  value:
+                                    description: Value value of the binding.
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            skipLogOutput:
+                              description: SkipLogOutput removes the output from the
+                                command. Useful for sensitive logs or to reduce noise.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        sleep:
+                          description: Sleep defines zzzz.
+                          properties:
+                            duration:
+                              description: Duration is the delay used for sleeping.
+                              type: string
+                          required:
+                          - duration
+                          type: object
+                        update:
+                          description: Update represents an update operation.
+                          properties:
+                            dryRun:
+                              description: DryRun determines whether the file should
+                                be applied in dry run mode.
+                              type: boolean
+                            expect:
+                              description: Expect defines a list of matched checks
+                                to validate the operation outcome.
+                              items:
+                                description: |-
+                                  Expectation represents a check to be applied on the result of an operation
+                                  with a match filter to determine if the verification should be considered.
+                                properties:
+                                  check:
+                                    description: Check defines the verification statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                  match:
+                                    description: Match defines the matching statement.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                required:
+                                - check
+                                type: object
+                              type: array
+                            file:
+                              description: |-
+                                File is the path to the referenced file. This can be a direct path to a file
+                                or an expression that matches multiple files, such as "manifest/*.yaml" for all YAML
+                                files within the "manifest" directory.
+                              type: string
+                            resource:
+                              description: Resource provides a resource to be applied.
+                              type: object
+                              x-kubernetes-embedded-resource: true
+                              x-kubernetes-preserve-unknown-fields: true
+                            template:
+                              description: Template determines whether resources should
+                                be considered for templating.
+                              type: boolean
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          type: object
+                        wait:
+                          description: Wait determines the resource wait collector
+                            to execute.
+                          properties:
+                            apiVersion:
+                              description: API version of the referent.
+                              type: string
+                            for:
+                              description: WaitFor specifies the condition to wait
+                                for.
+                              properties:
+                                condition:
+                                  description: Condition specifies the condition to
+                                    wait for.
+                                  properties:
+                                    name:
+                                      description: Name defines the specific condition
+                                        to wait for, e.g., "Available", "Ready".
+                                      type: string
+                                    value:
+                                      description: Value defines the specific condition
+                                        status to wait for, e.g., "True", "False".
+                                      type: string
+                                  required:
+                                  - name
+                                  type: object
+                                deletion:
+                                  description: Deletion specifies parameters for waiting
+                                    on a resource's deletion.
+                                  type: object
+                                jsonPath:
+                                  description: JsonPath specifies the json path condition
+                                    to wait for.
+                                  properties:
+                                    path:
+                                      description: Path defines the json path to wait
+                                        for, e.g. '{.status.phase}'.
+                                      type: string
+                                    value:
+                                      description: Value defines the expected value
+                                        to wait for, e.g., "Running".
+                                      type: string
+                                  required:
+                                  - path
+                                  - value
+                                  type: object
+                              type: object
+                            format:
+                              description: Format determines the output format (json
+                                or yaml).
+                              pattern: ^(?:json|yaml|\(.+\))$
+                              type: string
+                            kind:
+                              description: |-
+                                Kind of the referent.
+                                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                              type: string
+                            name:
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            namespace:
+                              description: |-
+                                Namespace of the referent.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                              type: string
+                            selector:
+                              description: Selector defines labels selector.
+                              type: string
+                            timeout:
+                              description: Timeout for the operation. Overrides the
+                                global timeout set in the Configuration.
+                              type: string
+                          required:
+                          - apiVersion
+                          - for
+                          - kind
+                          type: object
+                      type: object
+                    type: array
+                type: object
+              execution:
+                description: Execution contains tests execution configuration.
+                properties:
+                  failFast:
+                    description: FailFast determines whether the test should stop
+                      upon encountering the first failure.
+                    type: boolean
+                  forceTerminationGracePeriod:
+                    description: ForceTerminationGracePeriod forces the termination
+                      grace period on pods, statefulsets, daemonsets and deployments.
+                    type: string
+                  parallel:
+                    description: The maximum number of tests to run at once.
+                    format: int
+                    minimum: 1
+                    type: integer
+                  repeatCount:
+                    description: RepeatCount indicates how many times the tests should
+                      be executed.
+                    format: int
+                    minimum: 1
+                    type: integer
+                type: object
+              namespace:
+                description: Namespace contains properties for the namespace to use
+                  for tests.
+                properties:
+                  name:
+                    description: |-
+                      Name defines the namespace to use for tests.
+                      If not specified, every test will execute in a random ephemeral namespace
+                      unless the namespace is overridden in a the test spec.
+                    type: string
+                  template:
+                    description: Template defines a template to create the test namespace.
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                type: object
+              report:
+                description: Report contains properties for the report.
+                properties:
+                  format:
+                    default: JSON
+                    description: ReportFormat determines test report format (JSON|XML).
+                    enum:
+                    - JSON
+                    - XML
+                    type: string
+                  name:
+                    default: chainsaw-report
+                    description: ReportName defines the name of report to create.
+                      It defaults to "chainsaw-report".
+                    type: string
+                  path:
+                    description: ReportPath defines the path.
+                    type: string
+                type: object
+              templating:
+                default: {}
+                description: Templating contains the templating config.
+                properties:
+                  enabled:
+                    default: true
+                    description: Enabled determines whether resources should be considered
+                      for templating.
+                    type: boolean
+                type: object
+              timeouts:
+                default: {}
+                description: Global timeouts configuration. Applies to all tests/test
+                  steps if not overridden.
+                properties:
+                  apply:
+                    description: Apply defines the timeout for the apply operation
+                    type: string
+                  assert:
+                    description: Assert defines the timeout for the assert operation
+                    type: string
+                  cleanup:
+                    description: Cleanup defines the timeout for the cleanup operation
+                    type: string
+                  delete:
+                    description: Delete defines the timeout for the delete operation
+                    type: string
+                  error:
+                    description: Error defines the timeout for the error operation
+                    type: string
+                  exec:
+                    description: Exec defines the timeout for exec operations
+                    type: string
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: false

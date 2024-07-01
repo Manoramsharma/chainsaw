@@ -5,7 +5,7 @@ Loading default configuration...
 - SkipDelete false
 - FailFast false
 - ReportFormat ''
-- ReportName 'chainsaw-report'
+- ReportName ''
 - Namespace ''
 - FullName false
 - IncludeTestRegex 'test[4-6]'
@@ -16,7 +16,10 @@ Loading default configuration...
 - DeleteTimeout 15s
 - ErrorTimeout 30s
 - ExecTimeout 5s
+- DeletionPropagationPolicy Background
+- Template true
 - NoCluster false
+- PauseOnFailure false
 Loading tests...
 Loading values...
 Running tests...

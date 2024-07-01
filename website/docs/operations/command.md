@@ -1,44 +1,56 @@
 # Command
 
-The `command` operation provides a means to execute a specific command during the test step.
+The `command` operation provides a mean to execute a specific command during the test step.
+
+!!! warning
+    Command arguments are not going through shell expansion.
+    
+    It's crucial to consider potential differences in behavior, as Chainsaw may interpret them differently compared to regular shell environments.
 
 ## Configuration
 
-!!! tip "Reference documentation"
-    - The full structure of the `Command` is documented [here](../apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Command).
-    - This operation supports [bindings](../bindings/index.md).
-    - This operation supports [outputs](../bindings/outputs.md).
+The full structure of the `Command` is documented [here](../reference/apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Command).
 
-## Usage examples
+### Features
 
-Below is an example of using `command` in a `Test` resource.
+| Supported features                                 |                    |
+|----------------------------------------------------|:------------------:|
+| [Bindings](../general/bindings.md) support         | :white_check_mark: |
+| [Outputs](../general/outputs.md) support           | :white_check_mark: |
+| [Templating](../general/templating.md) support     | :x:                |
+| [Operation checks](../general/checks.md) support   | :white_check_mark: |
 
-!!! example
+### KUBECONFIG
 
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example
-    spec:
-      steps:
-      - try:
-        # ...
-        - command:
-            entrypoint: echo
-            args:
-            - hello chainsaw
-        # ...
-    ```
+- Unless `--no-cluster` is specified, Chainsaw always executes commands in the context of a temporary `KUBECONFIG`, built from the configured target cluster.
+- This specific `KUBECONFIG` has a single cluster, auth info and context configured (all named `chainsaw`).
 
-## Operation check
+## Examples
 
-Below is an example of using an [operation check](./check.md#command).
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - command:
+        entrypoint: echo
+        args:
+        - hello chainsaw
+```
 
-!!! example "With check"
+### Operation check
 
-    ```yaml
-    # ...
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
     - command:
         entrypoint: echo
         args:
@@ -48,5 +60,4 @@ Below is an example of using an [operation check](./check.md#command).
           # - succeed if the operation failed
           # - fail if the operation succeeded
           ($error != null): true
-    # ...
-    ```
+```

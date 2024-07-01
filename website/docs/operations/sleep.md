@@ -4,25 +4,27 @@ The `sleep` operation provides a means to sleep for a configured duration.
 
 ## Configuration
 
-!!! tip "Reference documentation"
-    The full structure of the `Sleep` is documented [here](../apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Sleep).
+The full structure of the `Sleep` is documented [here](../reference/apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Sleep).
 
-## Usage examples
+### Features
 
-Below is an example of using `sleep` in a `Test` resource.
+| Supported features                                 |                    |
+|----------------------------------------------------|:------------------:|
+| [Bindings](../general/bindings.md) support         | :x:                |
+| [Outputs](../general/outputs.md) support           | :x:                |
+| [Templating](../general/templating.md) support     | :x:                |
+| [Operation checks](../general/checks.md) support   | :x:                |
 
-!!! example
+## Examples
 
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example
-    spec:
-      steps:
-      - try:
-        # ...
-        - sleep:
-            duration: 30s
-        # ...
-    ```
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - sleep:
+        duration: 30s
+```

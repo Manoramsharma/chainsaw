@@ -9,6 +9,7 @@ The list of organizations that have publicly shared the usage of Chainsaw:
 | Organization | Success Story |
 |:--|:--|
 | [Keptn](https://github.com/keptn/lifecycle-toolkit)| Chainsaw replaced Kuttl, and helped us get rid of many unreadable bash scripts |
+| [OpenFeature](https://github.com/open-feature/open-feature-operator)| Chainsaw replaced Kuttl, helped us improve logging and remove native kubectl calls |
 | [Kyverno](https://kyverno.io) | Running all end to end tests for both Kyverno and the policies catalog |
 | [Nirmata](https://nirmata.com/) | Using Chainsaw extensively to test curated Kyverno policies, Kyverno Operator and other e2e internal testing |
 | [Redis-operator](https://github.com/OT-CONTAINER-KIT/redis-operator) | Chainsaw helped a lot for declarative assertion of Redis Cluster state against various e2e test  |
@@ -17,8 +18,9 @@ The list of organizations that have publicly shared the usage of Chainsaw:
 | [Grafana-operator](https://github.com/grafana/grafana-operator) | Chainsaw enabled easier e2e testing and CI debugging after replacing kuttl |
 | [Opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator) | Chainsaw cut down on hacks, improved code-reuse and enhanced test debugging |
 | [Tempo-operator](https://github.com/grafana/tempo-operator) | Chainsaw cranked up the tempo, making our e2e tests dance to a rhythm of reliability and efficiency |
-| [Provider-ceph](https://github.com/linode/provider-ceph) | Chainsaw replaced Kuttl and made our e2e tests much more readable and easier to debug. |
+| [Provider-ceph](https://github.com/linode/provider-ceph) | Chainsaw replaced Kuttl and made our e2e tests much more readable and easier to debug |
 | [Linode CAPI provider](https://github.com/linode/cluster-api-provider-linode) | Chainsaw replaced Kuttl and made our e2e tests much more readable and easier to debug. 🙏 @eddycharly |
+| [Linode COSI driver](https://github.com/linode/linode-cosi-driver) | Running all end to end tests for object store driver |
 
 
 <!-- append the line below to the table

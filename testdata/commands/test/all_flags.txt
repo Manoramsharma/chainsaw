@@ -16,10 +16,13 @@ Loading default configuration...
 - DeleteTimeout 1m40s
 - ErrorTimeout 1m40s
 - ExecTimeout 1m40s
+- DeletionPropagationPolicy Background
 - Parallel 24
 - RepeatCount 12
 - ForceTerminationGracePeriod 5s
+- Template true
 - NoCluster false
+- PauseOnFailure false
 Loading tests...
 Loading values...
 Running tests...

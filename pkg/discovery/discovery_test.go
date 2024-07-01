@@ -36,7 +36,7 @@ func TestDiscoverTests(t *testing.T) {
 						TestStepSpec: v1alpha1.TestStepSpec{
 							Try: []v1alpha1.Operation{{
 								Apply: &v1alpha1.Apply{
-									FileRefOrResource: v1alpha1.FileRefOrResource{
+									ActionResourceRef: v1alpha1.ActionResourceRef{
 										FileRef: v1alpha1.FileRef{
 											File: "configmap.yaml",
 										},
@@ -49,7 +49,7 @@ func TestDiscoverTests(t *testing.T) {
 						TestStepSpec: v1alpha1.TestStepSpec{
 							Try: []v1alpha1.Operation{{
 								Assert: &v1alpha1.Assert{
-									FileRefOrCheck: v1alpha1.FileRefOrCheck{
+									ActionCheckRef: v1alpha1.ActionCheckRef{
 										FileRef: v1alpha1.FileRef{
 											File: "configmap.yaml",
 										},
@@ -82,7 +82,7 @@ func TestDiscoverTests(t *testing.T) {
 						TestStepSpec: v1alpha1.TestStepSpec{
 							Try: []v1alpha1.Operation{{
 								Apply: &v1alpha1.Apply{
-									FileRefOrResource: v1alpha1.FileRefOrResource{
+									ActionResourceRef: v1alpha1.ActionResourceRef{
 										FileRef: v1alpha1.FileRef{
 											File: "01-configmap.yaml",
 										},
@@ -90,7 +90,7 @@ func TestDiscoverTests(t *testing.T) {
 								},
 							}, {
 								Assert: &v1alpha1.Assert{
-									FileRefOrCheck: v1alpha1.FileRefOrCheck{
+									ActionCheckRef: v1alpha1.ActionCheckRef{
 										FileRef: v1alpha1.FileRef{
 											File: "01-assert.yaml",
 										},
@@ -98,7 +98,7 @@ func TestDiscoverTests(t *testing.T) {
 								},
 							}, {
 								Error: &v1alpha1.Error{
-									FileRefOrCheck: v1alpha1.FileRefOrCheck{
+									ActionCheckRef: v1alpha1.ActionCheckRef{
 										FileRef: v1alpha1.FileRef{
 											File: "01-errors.yaml",
 										},
@@ -114,7 +114,7 @@ func TestDiscoverTests(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := DiscoverTests(tt.fileName, nil, tt.paths...)
+			got, err := DiscoverTests(tt.fileName, nil, false, tt.paths...)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -145,7 +145,7 @@ func TestHelpDiscoverTests(t *testing.T) {
 	}}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tests, err := discoverTests("chainsaw-test.yaml", nil, tc.folders...)
+			tests, err := discoverTests("chainsaw-test.yaml", nil, false, tc.folders...)
 			if tc.expectError {
 				assert.Error(t, err, "Expected an error but got none")
 			} else {
@@ -162,6 +162,6 @@ func TestDiscoverTests_UnreadableFolder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to change directory permissions: %v", err)
 	}
-	_, err = DiscoverTests("chainsaw-test.yaml", nil, tempDir)
+	_, err = DiscoverTests("chainsaw-test.yaml", nil, false, tempDir)
 	assert.Error(t, err, "Expected an error for unreadable folder")
 }

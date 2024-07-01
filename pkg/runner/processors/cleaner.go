@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/jmespath-community/go-jmespath/pkg/binding"
 	"github.com/kyverno/chainsaw/pkg/client"
 	"github.com/kyverno/chainsaw/pkg/runner/namespacer"
+	"github.com/kyverno/chainsaw/pkg/runner/operations"
 	opdelete "github.com/kyverno/chainsaw/pkg/runner/operations/delete"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,15 +26,19 @@ func newCleaner(namespacer namespacer.Namespacer, delay *metav1.Duration) *clean
 	}
 }
 
-func (c *cleaner) register(obj unstructured.Unstructured, client client.Client, timeout *time.Duration) {
-	c.operations = append(c.operations, newOperation(
+func (c *cleaner) register(ops ...operation) {
+	c.operations = append(c.operations, ops...)
+}
+
+func (c *cleaner) addObject(obj unstructured.Unstructured, client client.Client, timeout *time.Duration) {
+	c.register(newOperation(
 		OperationInfo{},
 		true,
 		timeout,
-		opdelete.New(client, obj, c.namespacer, false),
+		func(ctx context.Context, bindings binding.Bindings) (operations.Operation, binding.Bindings, error) {
+			return opdelete.New(client, obj, c.namespacer, false, metav1.DeletePropagationBackground), bindings, nil
+		},
 		nil,
-		nil,
-		client,
 	))
 }
 
@@ -43,4 +49,8 @@ func (c *cleaner) run(ctx context.Context) {
 	for i := len(c.operations) - 1; i >= 0; i-- {
 		c.operations[i].execute(ctx, nil)
 	}
+}
+
+func (c *cleaner) isEmpty() bool {
+	return len(c.operations) == 0
 }

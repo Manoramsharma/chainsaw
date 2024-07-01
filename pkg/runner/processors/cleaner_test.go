@@ -38,7 +38,7 @@ func Test_Cleaner_Register(t *testing.T) {
 			c := newCleaner(fakeNamespacer, nil)
 			for i := 0; i < tc.expectedOp; i++ {
 				localTimeout := tc.timeout
-				c.register(mockObj, fakeClient, &localTimeout)
+				c.addObject(mockObj, fakeClient, &localTimeout)
 			}
 			assert.Len(t, c.operations, tc.expectedOp)
 			for _, op := range c.operations {
@@ -65,13 +65,13 @@ func Test_Cleaner_Run(t *testing.T) {
 				OperationInfo{},
 				true,
 				nil,
-				mock.MockOperation{
-					ExecFn: func(_ context.Context, _ binding.Bindings) (operations.Outputs, error) {
-						return nil, nil
-					},
+				func(_ context.Context, bindings binding.Bindings) (operations.Operation, binding.Bindings, error) {
+					return mock.MockOperation{
+						ExecFn: func(_ context.Context, _ binding.Bindings) (operations.Outputs, error) {
+							return nil, nil
+						},
+					}, bindings, nil
 				},
-				nil,
-				nil,
 				nil,
 			),
 		},

@@ -1,12 +1,12 @@
-# Test: `apply-outputs`
+# Test: `apply-outputs-1`
 
 *No description*
 
 ## Steps
 
-| # | Name | Bindings | Try | Catch | Finally |
+| # | Name | Bindings | Try | Catch | Finally | Cleanup |
 |:-:|---|:-:|:-:|:-:|:-:|
-| 1 | [step-1](#step-step-1) | 0 | 3 | 0 | 0 |
+| 1 | [step-1](#step-step-1) | 0 | 3 | 0 | 0 | 0 |
 
 ### Step: `step-1`
 
@@ -22,7 +22,7 @@
 
 ---
 
-# Test: `apply-outputs`
+# Test: `apply-outputs-2`
 
 *No description*
 
@@ -35,9 +35,9 @@
 
 ## Steps
 
-| # | Name | Bindings | Try | Catch | Finally |
+| # | Name | Bindings | Try | Catch | Finally | Cleanup |
 |:-:|---|:-:|:-:|:-:|:-:|
-| 1 | [step-1](#step-step-1) | 1 | 6 | 0 | 0 |
+| 1 | [step-1](#step-step-1) | 1 | 6 | 0 | 0 | 0 |
 
 ### Step: `step-1`
 

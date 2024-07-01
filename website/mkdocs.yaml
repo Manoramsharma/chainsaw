@@ -2,107 +2,127 @@ INHERIT: ./mkdocs.base.yaml
 
 nav:
 - Home: index.md
-- Getting Started:
-  - intro.md
-  - install.md
-  - quick-start.md
-  - gh-action.md
-  - resources.md
-  - docs.md
-  - community.md
-- Writing tests:
-  - writing-tests.md
-  - Configuration:
-    - configuration/index.md
-    - configuration/file.md
-    - configuration/flags.md
-    - configuration/timeouts.md
-    - configuration/grace.md
-    - configuration/cleanup-delay.md
-    - configuration/reports.md
-    - configuration/selector.md
-    - configuration/values.md
-    - configuration/multi-cluster.md
-    - configuration/templating.md
-    - configuration/no-cluster.md
-  - Tests:
-    - tests/index.md
-    - tests/manifests-based.md
-    - tests/test-based.md
-  - Test steps:
-    - steps/index.md
-    - steps/try.md
-    - steps/catch.md
-    - steps/finally.md
-  - Operations:
-    - operations/index.md
-    - operations/check.md
-    - operations/apply.md
-    - operations/assert.md
-    - operations/create.md
-    - operations/command.md
-    - operations/delete.md
-    - operations/error.md
-    - operations/patch.md
-    - operations/script.md
-    - operations/sleep.md
-    - operations/update.md
-    - operations/wait.md
-    - operations/templating.md
-    - operations/non-resource-assert.md
-  - Collectors:
-    - collectors/index.md
-    - collectors/pod-logs.md
-    - collectors/events.md
-    - collectors/get.md
-    - collectors/describe.md
-  - Bindings:
-    - bindings/index.md
-    - bindings/outputs.md
-  - Other resources:
-    - more/events.md
-    - more/crds.md
-    - more/lint.md
-    - more/test-docs.md
-    - more/kuttl-migration.md
-    - Examples: examples/index.md
-  - Reference Documentation:
-    - Command Line:
-      - commands/chainsaw.md
-      - commands/chainsaw_assert.md
-      - commands/chainsaw_build.md
-      - commands/chainsaw_build_docs.md
-      - commands/chainsaw_completion.md
-      - commands/chainsaw_completion_bash.md
-      - commands/chainsaw_completion_fish.md
-      - commands/chainsaw_completion_powershell.md
-      - commands/chainsaw_completion_zsh.md
-      - commands/chainsaw_create.md
-      - commands/chainsaw_create_test.md
-      - commands/chainsaw_docs.md
-      - commands/chainsaw_export.md
-      - commands/chainsaw_export_schemas.md
-      - commands/chainsaw_lint.md
-      - commands/chainsaw_migrate.md
-      - commands/chainsaw_migrate_kuttl.md
-      - commands/chainsaw_migrate_kuttl_config.md
-      - commands/chainsaw_migrate_kuttl_tests.md
-      - commands/chainsaw_test.md
-      - commands/chainsaw_version.md
-    - JMESPath:
-      - Functions: jp/functions.md
-    - APIs:
-      - v1alpha1: apis/chainsaw.v1alpha1.md
-  - json-schemas.md
+- Getting started:
+  - quick-start/index.md
+  - quick-start/install.md
+  - quick-start/completion.md
+  - quick-start/first-test.md
+  - quick-start/run-tests.md
+  - quick-start/assertion-trees.md
+  - quick-start/bindings.md
+  - quick-start/resource-templating.md
+  - quick-start/operation-outputs.md
+  - quick-start/try-catch.md
+  - quick-start/timeouts.md
+  - quick-start/cleanup.md
+  - quick-start/next-steps.md
+  - quick-start/resources.md
+  - CI/CD:
+    - cicd/gh-action.md
+- Configuration:
+  - configuration/index.md
+  - configuration/file.md
+  - configuration/flags.md
+  - Options:
+    - configuration/options/timeouts.md
+    - configuration/options/discovery.md
+    - configuration/options/execution.md
+    - configuration/options/namespace.md
+    - configuration/options/templating.md
+    - configuration/options/cleanup.md
+    - configuration/options/deletion.md
+    - configuration/options/error.md
+    - configuration/options/report.md
+    - configuration/options/clusters.md
+    - configuration/options/pause.md
+    - configuration/options/no-cluster.md
+    - configuration/options/label-selectors.md
+    - configuration/options/values.md
+- Test:
+  - test/index.md
+  - test/explicit.md
+  - test/conventional.md
+  - General concepts:
+    - general/inheritance.md
+    - general/namespace.md
+    - general/bindings.md
+    - general/templating.md
+    - general/outputs.md
+    - general/references.md
+    - general/checks.md
+  - Test spec:
+    - test/spec/index.md
+  - Test step spec:
+    - step/index.md
+    - step/try.md
+    - step/catch.md
+    - step/finally.md
+    - step/cleanup.md
+- Operations:
+  - operations/index.md
+  - operations/apply.md
+  - operations/assert.md
+  - operations/command.md
+  - operations/create.md
+  - operations/delete.md
+  - operations/error.md
+  - operations/patch.md
+  - operations/script.md
+  - operations/sleep.md
+  - operations/update.md
+  - Kubectl helpers:
+    - operations/helpers/index.md
+    - operations/helpers/describe.md
+    - operations/helpers/events.md
+    - operations/helpers/get.md
+    - operations/helpers/logs.md
+    - operations/helpers/wait.md
+- Reference:
+  - reference/index.md
+  - reference/builtins.md
+  - reference/json-schemas.md
+  - APIs:
+    - v1alpha1: reference/apis/chainsaw.v1alpha1.md
+    - v1alpha2: reference/apis/chainsaw.v1alpha2.md
+  - JMESPath:
+    - Functions: reference/jp/functions.md
+  - Command Line:
+    - chainsaw: reference/commands/chainsaw.md
+    - chainsaw assert: reference/commands/chainsaw_assert.md
+    - chainsaw build: reference/commands/chainsaw_build.md
+    - chainsaw build docs: reference/commands/chainsaw_build_docs.md
+    - chainsaw completion: reference/commands/chainsaw_completion.md
+    - chainsaw completion bash: reference/commands/chainsaw_completion_bash.md
+    - chainsaw completion fish: reference/commands/chainsaw_completion_fish.md
+    - chainsaw completion powershell: reference/commands/chainsaw_completion_powershell.md
+    - chainsaw completion zsh: reference/commands/chainsaw_completion_zsh.md
+    - chainsaw create: reference/commands/chainsaw_create.md
+    - chainsaw create test: reference/commands/chainsaw_create_test.md
+    - chainsaw docs: reference/commands/chainsaw_docs.md
+    - chainsaw export: reference/commands/chainsaw_export.md
+    - chainsaw export schemas: reference/commands/chainsaw_export_schemas.md
+    - chainsaw lint: reference/commands/chainsaw_lint.md
+    - chainsaw migrate: reference/commands/chainsaw_migrate.md
+    - chainsaw migrate kuttl: reference/commands/chainsaw_migrate_kuttl.md
+    - chainsaw migrate kuttl config: reference/commands/chainsaw_migrate_kuttl_config.md
+    - chainsaw migrate kuttl tests: reference/commands/chainsaw_migrate_kuttl_tests.md
+    - chainsaw test: reference/commands/chainsaw_test.md
+    - chainsaw version: reference/commands/chainsaw_version.md
 - Examples:
   - examples/index.md
-  - Examples:
-    - examples/basic.md
-    - examples/inline.md
-    - examples/assertion-tree.md
-    - examples/array-assertions.md
-    - examples/non-resource-assertion.md
-    - examples/labels-selector.md
-    - examples/test-output.md
-- Blog:
-  - blog/index.md
+  - examples/crds.md
+  - examples/events.md
+  - examples/label-selectors.md
+  - examples/inline.md
+  - examples/concurrency.md
+  - examples/kube-version.md
+  - examples/non-resource-assertions.md
+  - examples/values.md
+  - examples/multi-cluster.md
+  - examples/negative-testing.md
+  - examples/test-output.md
+  - Guides:
+    - guides/lint.md
+    - guides/kuttl-migration.md
+    - guides/test-docs.md
+- Community: community/index.md

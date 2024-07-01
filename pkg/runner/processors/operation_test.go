@@ -31,7 +31,7 @@ func TestOperation_Execute(t *testing.T) {
 		continueOnError: true,
 		expectedFail:    true,
 		timeout:         1 * time.Second,
-		operationReport: report.NewOperation("FakeOperation", report.OperationTypeCreate),
+		operationReport: &report.OperationReport{},
 	}, {
 		name: "operation fails and don't continues",
 		operation: mock.MockOperation{
@@ -41,7 +41,7 @@ func TestOperation_Execute(t *testing.T) {
 		},
 		continueOnError: false,
 		expectedFail:    true,
-		operationReport: report.NewOperation("FakeOperation", report.OperationTypeCreate),
+		operationReport: &report.OperationReport{},
 	}, {
 		name: "operation succeeds",
 		operation: mock.MockOperation{
@@ -51,7 +51,7 @@ func TestOperation_Execute(t *testing.T) {
 		},
 		expectedFail:    false,
 		timeout:         1 * time.Second,
-		operationReport: report.NewOperation("FakeOperation", report.OperationTypeCreate),
+		operationReport: &report.OperationReport{},
 	}}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -60,10 +60,10 @@ func TestOperation_Execute(t *testing.T) {
 				OperationInfo{},
 				localTC.continueOnError,
 				&localTC.timeout,
-				localTC.operation,
+				func(ctx context.Context, bindings binding.Bindings) (operations.Operation, binding.Bindings, error) {
+					return localTC.operation, bindings, nil
+				},
 				localTC.operationReport,
-				nil,
-				nil,
 			)
 			nt := testing.MockT{}
 			ctx := testing.IntoContext(context.Background(), &nt)

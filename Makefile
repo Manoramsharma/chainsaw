@@ -9,7 +9,7 @@ ORG                                ?= kyverno
 PACKAGE                            ?= github.com/$(ORG)/chainsaw
 GOPATH_SHIM                        := ${PWD}/.gopath
 PACKAGE_SHIM                       := $(GOPATH_SHIM)/src/$(PACKAGE)
-INPUT_DIRS                         := $(PACKAGE)/pkg/apis/v1alpha1
+INPUT_DIRS                         := $(PACKAGE)/pkg/apis/v1alpha1,$(PACKAGE)/pkg/apis/v1alpha2
 CRDS_PATH                          := ${PWD}/.crds
 CLI_BIN                            := chainsaw
 CGO_ENABLED                        ?= 0
@@ -29,9 +29,10 @@ KIND_IMAGE                         ?= kindest/node:v1.29.2
 
 TOOLS_DIR                          := $(PWD)/.tools
 CONTROLLER_GEN                     := $(TOOLS_DIR)/controller-gen
-CONTROLLER_GEN_VERSION             := v0.12.0
+CONTROLLER_GEN_VERSION             := v0.15.0
 REGISTER_GEN                       := $(TOOLS_DIR)/register-gen
 DEEPCOPY_GEN                       := $(TOOLS_DIR)/deepcopy-gen
+CONVERSION_GEN                     := $(TOOLS_DIR)/conversion-gen
 CODE_GEN_VERSION                   := v0.28.0
 REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
 REFERENCE_DOCS_VERSION             := latest
@@ -39,7 +40,7 @@ KIND                               := $(TOOLS_DIR)/kind
 KIND_VERSION                       := v0.22.0
 KO                                 ?= $(TOOLS_DIR)/ko
 KO_VERSION                         ?= v0.15.1
-TOOLS                              := $(CONTROLLER_GEN) $(REGISTER_GEN) $(DEEPCOPY_GEN) $(REFERENCE_DOCS) $(KIND) $(KO)
+TOOLS                              := $(CONTROLLER_GEN) $(REGISTER_GEN) $(DEEPCOPY_GEN) $(CONVERSION_GEN) $(REFERENCE_DOCS) $(KIND) $(KO)
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -59,6 +60,10 @@ $(REGISTER_GEN):
 $(DEEPCOPY_GEN):
 	@echo Install deepcopy-gen... >&2
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/deepcopy-gen@$(CODE_GEN_VERSION)
+
+$(CONVERSION_GEN):
+	@echo Install conversion-gen... >&2
+	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/conversion-gen@$(CODE_GEN_VERSION)
 
 $(REFERENCE_DOCS):
 	@echo Install genref... >&2
@@ -113,12 +118,25 @@ codegen-deepcopy: $(DEEPCOPY_GEN)
 		--input-dirs=$(INPUT_DIRS) \
 		--output-file-base=zz_generated.deepcopy
 
+.PHONY: codegen-conversion
+codegen-conversion: ## Generate conversion functions
+codegen-conversion: $(PACKAGE_SHIM)
+codegen-conversion: $(CONVERSION_GEN)
+	@echo Generate conversion functions... >&2
+	@GOPATH=$(GOPATH_SHIM) $(CONVERSION_GEN) \
+		--go-header-file=./.hack/boilerplate.go.txt \
+		--input-dirs=$(INPUT_DIRS) \
+		--output-file-base=zz_generated.conversion
+
 .PHONY: codegen-crds
 codegen-crds: ## Generate CRDs
 codegen-crds: $(CONTROLLER_GEN)
+codegen-crds: codegen-deepcopy
+codegen-crds: codegen-register
+codegen-crds: codegen-conversion
 	@echo Generate crds... >&2
 	@rm -rf $(CRDS_PATH)
-	@$(CONTROLLER_GEN) crd paths=./pkg/apis/... crd:crdVersions=v1 output:dir=$(CRDS_PATH)
+	@$(CONTROLLER_GEN) paths=./pkg/apis/... crd:crdVersions=v1 output:dir=$(CRDS_PATH)
 	@echo Copy generated CRDs to embed in the CLI... >&2
 	@rm -rf pkg/data/crds && mkdir -p pkg/data/crds
 	@cp $(CRDS_PATH)/* pkg/data/crds
@@ -127,24 +145,25 @@ codegen-crds: $(CONTROLLER_GEN)
 codegen-cli-docs: ## Generate CLI docs
 codegen-cli-docs: build
 	@echo Generate cli docs... >&2
-	@rm -rf website/docs/commands && mkdir -p website/docs/commands
+	@rm -rf website/docs/reference/commands && mkdir -p website/reference/docs/commands
 	@rm -rf docs/user/commands && mkdir -p docs/user/commands
-	@./$(CLI_BIN) docs -o website/docs/commands --autogenTag=false
+	@./$(CLI_BIN) docs -o website/docs/reference/commands --autogenTag=false
 
 .PHONY: codegen-api-docs
 codegen-api-docs: ## Generate markdown API docs
 codegen-api-docs: $(REFERENCE_DOCS)
 codegen-api-docs: codegen-deepcopy
 codegen-api-docs: codegen-register
+codegen-api-docs: codegen-conversion
 	@echo Generate api docs... >&2
-	@rm -rf ./website/docs/apis
-	@cd ./website/apis && $(REFERENCE_DOCS) -c config.yaml -f markdown -o ../docs/apis
+	@rm -rf ./website/docs/reference/apis
+	@cd ./website/apis && $(REFERENCE_DOCS) -c config.yaml -f markdown -o ../docs/reference/apis
 
 .PHONY: codegen-jp-docs
 codegen-jp-docs: ## Generate JP docs
 	@echo Generate jp docs... >&2
-	@rm -rf ./website/docs/jp && mkdir -p ./website/docs/jp
-	@go run ./website/jp/main.go > ./website/docs/jp/functions.md
+	@rm -rf ./website/docs/reference/jp && mkdir -p ./website/docs/reference/jp
+	@go run ./website/jp/main.go > ./website/docs/reference/jp/functions.md
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
@@ -152,9 +171,7 @@ codegen-mkdocs: codegen-cli-docs
 codegen-mkdocs: codegen-api-docs
 codegen-mkdocs: codegen-jp-docs
 	@echo Generate mkdocs website... >&2
-	@$(PIP) install mkdocs
-	@$(PIP) install --upgrade pip
-	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
+	@$(PIP) install -r requirements.txt
 	@mkdocs build -f ./website/mkdocs.yaml
 
 .PHONY: codegen-schemas-openapi
@@ -171,6 +188,7 @@ codegen-schemas-openapi: $(KIND)
 	@sleep 15
 	@kubectl get --raw /openapi/v2 > ./.temp/.schemas/openapi/v2/schema.json
 	@kubectl get --raw /openapi/v3/apis/chainsaw.kyverno.io/v1alpha1 > ./.temp/.schemas/openapi/v3/apis/chainsaw.kyverno.io/v1alpha1.json
+	@kubectl get --raw /openapi/v3/apis/chainsaw.kyverno.io/v1alpha2 > ./.temp/.schemas/openapi/v3/apis/chainsaw.kyverno.io/v1alpha2.json
 	@$(KIND) delete cluster --name schema
 	@kubectl config use-context $(CURRENT_CONTEXT) || true
 
@@ -178,7 +196,7 @@ codegen-schemas-openapi: $(KIND)
 codegen-schemas-json: ## Generate json schemas
 codegen-schemas-json: codegen-schemas-openapi
 	@echo Generate json schema... >&2
-	@$(PIP) install openapi2jsonschema --no-build-isolation
+	@$(PIP) install -r requirements.txt
 	@rm -rf ./.temp/.schemas/json
 	@rm -rf ./.schemas/json
 	@openapi2jsonschema ./.temp/.schemas/openapi/v2/schema.json --kubernetes --stand-alone --expanded -o ./.temp/.schemas/json
@@ -205,6 +223,7 @@ codegen: codegen-mkdocs
 codegen: codegen-register
 codegen: codegen-schemas-json
 codegen: codegen-tests-catalog
+codegen: codegen-conversion
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date
@@ -222,9 +241,7 @@ verify-codegen: codegen
 .PHONY: mkdocs-serve
 mkdocs-serve: ## Generate and serve mkdocs website
 	@echo Generate and servemkdocs website... >&2
-	@$(PIP) install mkdocs
-	@$(PIP) install --upgrade pip
-	@$(PIP) install -U mkdocs-material mkdocs-redirects mkdocs-minify-plugin mkdocs-include-markdown-plugin lunr mkdocs-rss-plugin mike
+	@$(PIP) install -r requirements.txt
 	@mkdocs serve -f ./website/mkdocs.yaml
 
 #########
@@ -280,7 +297,7 @@ tests: $(CLI_BIN)
 e2e-tests: ## Run e2e tests
 e2e-tests: $(CLI_BIN)
 	@echo Running e2e tests... >&2
-	@./$(CLI_BIN) test --test-dir ./testdata/e2e --config ./testdata/e2e/config.yaml --values ./testdata/e2e/values.yaml
+	@./$(CLI_BIN) test --test-dir ./testdata/e2e --remarshal --config ./testdata/e2e/config.yaml --values ./testdata/e2e/values.yaml
 
 .PHONY: e2e-tests-ko 
 e2e-tests-ko: ## Run e2e tests from a docker container
@@ -294,8 +311,7 @@ e2e-tests-ko: build-ko
 		--user $(id -u):$(id -g) \
 		--name chainsaw \
 		--rm \
-		ko.local/github.com/kyverno/chainsaw:$(KO_TAGS) \
-		test /chainsaw --config /chainsaw/config.yaml --values /chainsaw/values.yaml
+		ko.local/github.com/kyverno/chainsaw:$(KO_TAGS) test /chainsaw --remarshal --config /chainsaw/config.yaml --values /chainsaw/values.yaml --selector !no-ko-test
 
 ########	
 # KIND #

@@ -18,24 +18,37 @@ func TestValidateDescribe(t *testing.T) {
 		name:      "No resource provided",
 		input:     &v1alpha1.Describe{},
 		expectErr: true,
-		errMsg:    "kind or resource must be specified",
+		errMsg:    "apiVersion must be specified",
+	}, {
+		name:      "No resource provided",
+		input:     &v1alpha1.Describe{},
+		expectErr: true,
+		errMsg:    "kind must be specified",
 	}, {
 		name: "Neither Name nor Selector provided",
 		input: &v1alpha1.Describe{
-			ResourceReference: v1alpha1.ResourceReference{
-				Resource: "pods",
+			ActionObject: v1alpha1.ActionObject{
+				ObjectType: v1alpha1.ObjectType{
+					APIVersion: "v1",
+					Kind:       "Pod",
+				},
 			},
 		},
 		expectErr: false,
 	}, {
 		name: "Both Name and Selector provided",
 		input: &v1alpha1.Describe{
-			ResourceReference: v1alpha1.ResourceReference{
-				Resource: "pods",
-			},
-			ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-				Name:     "example-name",
-				Selector: "example-selector",
+			ActionObject: v1alpha1.ActionObject{
+				ObjectType: v1alpha1.ObjectType{
+					APIVersion: "v1",
+					Kind:       "Pod",
+				},
+				ActionObjectSelector: v1alpha1.ActionObjectSelector{
+					ObjectName: v1alpha1.ObjectName{
+						Name: "example-name",
+					},
+					Selector: "example-selector",
+				},
 			},
 		},
 		expectErr: true,
@@ -43,22 +56,30 @@ func TestValidateDescribe(t *testing.T) {
 	}, {
 		name: "Only Name provided",
 		input: &v1alpha1.Describe{
-			ResourceReference: v1alpha1.ResourceReference{
-				Resource: "pods",
-			},
-			ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-				Name: "example-name",
+			ActionObject: v1alpha1.ActionObject{
+				ObjectType: v1alpha1.ObjectType{
+					APIVersion: "v1",
+					Kind:       "Pod",
+				},
+				ActionObjectSelector: v1alpha1.ActionObjectSelector{
+					ObjectName: v1alpha1.ObjectName{
+						Name: "example-name",
+					},
+				},
 			},
 		},
 		expectErr: false,
 	}, {
 		name: "Only Selector provided",
 		input: &v1alpha1.Describe{
-			ResourceReference: v1alpha1.ResourceReference{
-				Resource: "pods",
-			},
-			ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-				Selector: "example-selector",
+			ActionObject: v1alpha1.ActionObject{
+				ObjectType: v1alpha1.ObjectType{
+					APIVersion: "v1",
+					Kind:       "Pod",
+				},
+				ActionObjectSelector: v1alpha1.ActionObjectSelector{
+					Selector: "example-selector",
+				},
 			},
 		},
 		expectErr: false,

@@ -48,7 +48,7 @@ func Command() *cobra.Command {
 				if save {
 					path := filepath.Join(path, "chainsaw-test.yaml")
 					fmt.Fprintf(out, "Saving file %s ...\n", path)
-					if err := os.WriteFile(path, data, os.ModePerm); err != nil {
+					if err := os.WriteFile(path, data, 0o600); err != nil {
 						return err
 					}
 				} else {
@@ -70,67 +70,79 @@ func sampleSteps(description bool) []v1alpha1.TestStep {
 		TestStepSpec: v1alpha1.TestStepSpec{
 			Description: getDescription(description, "sample step 1"),
 			Try: []v1alpha1.Operation{{
-				Description: getDescription(description, "sample apply operation"),
+				OperationBase: v1alpha1.OperationBase{
+					Description: getDescription(description, "sample apply operation"),
+				},
 				Apply: &v1alpha1.Apply{
-					FileRefOrResource: v1alpha1.FileRefOrResource{
+					ActionResourceRef: v1alpha1.ActionResourceRef{
 						FileRef: v1alpha1.FileRef{
 							File: "resources.yaml",
 						},
 					},
 				},
 			}, {
-				Description: getDescription(description, "sample assert operation"),
+				OperationBase: v1alpha1.OperationBase{
+					Description: getDescription(description, "sample assert operation"),
+				},
 				Assert: &v1alpha1.Assert{
-					FileRefOrCheck: v1alpha1.FileRefOrCheck{
+					ActionCheckRef: v1alpha1.ActionCheckRef{
 						FileRef: v1alpha1.FileRef{
 							File: "assert.yaml",
 						},
 					},
 				},
 			}, {
-				Description: getDescription(description, "sample error operation"),
+				OperationBase: v1alpha1.OperationBase{
+					Description: getDescription(description, "sample error operation"),
+				},
 				Error: &v1alpha1.Error{
-					FileRefOrCheck: v1alpha1.FileRefOrCheck{
+					ActionCheckRef: v1alpha1.ActionCheckRef{
 						FileRef: v1alpha1.FileRef{
 							File: "error.yaml",
 						},
 					},
 				},
 			}, {
-				Description: getDescription(description, "sample delete operation"),
+				OperationBase: v1alpha1.OperationBase{
+					Description: getDescription(description, "sample delete operation"),
+				},
 				Delete: &v1alpha1.Delete{
-					ObjectReference: v1alpha1.ObjectReference{
-						ObjectSelector: v1alpha1.ObjectSelector{
-							Name: "foo",
-						},
+					Ref: &v1alpha1.ObjectReference{
 						ObjectType: v1alpha1.ObjectType{
 							APIVersion: "v1",
 							Kind:       "Pod",
 						},
+						ObjectName: v1alpha1.ObjectName{
+							Name: "foo",
+						},
 					},
 				},
 			}, {
-				Description: getDescription(description, "sample script operation"),
+				OperationBase: v1alpha1.OperationBase{
+					Description: getDescription(description, "sample script operation"),
+				},
 				Script: &v1alpha1.Script{
 					Content: `echo "test namespace = $NAMESPACE"`,
 				},
 			}},
-			Catch: []v1alpha1.Catch{{
+			Catch: []v1alpha1.CatchFinally{{
 				Description: getDescription(description, "sample events collector"),
 				Events: &v1alpha1.Events{
-					ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
-						Name: "foo",
+					ActionObjectSelector: v1alpha1.ActionObjectSelector{
+						ObjectName: v1alpha1.ObjectName{
+							Name: "foo",
+						},
 					},
 				},
 			}, {
 				Description: getDescription(description, "sample pod logs collector"),
 				PodLogs: &v1alpha1.PodLogs{
-					ObjectLabelsSelector: v1alpha1.ObjectLabelsSelector{
+					ActionObjectSelector: v1alpha1.ActionObjectSelector{
 						Selector: "app=foo",
 					},
 				},
 			}},
-			Finally: []v1alpha1.Finally{{
+			Finally: []v1alpha1.CatchFinally{{
 				Description: getDescription(description, "sample sleep operation"),
 				Sleep: &v1alpha1.Sleep{
 					Duration: metav1.Duration{Duration: 5 * time.Second},

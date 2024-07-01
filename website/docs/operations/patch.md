@@ -1,101 +1,86 @@
 # Patch
 
-The `patch` operation lets you define resources that should be modified in the Kubernetes cluster during the test step.
-These can be configurations, deployments, services, or any other Kubernetes resource.
+The `patch` operation defines resources that should be modified in a Kubernetes cluster.
+
+If the resource to be modified does not exist in the cluster, the step will fail.
 
 ## Configuration
 
-!!! tip "Reference documentation"
-    - The full structure of the `Patch` is documented [here](../apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Patch).
-    - This operation supports [bindings](../bindings/index.md).
-    - This operation supports [outputs](../bindings/outputs.md).
+The full structure of the `Patch` is documented [here](../reference/apis/chainsaw.v1alpha1.md#chainsaw-kyverno-io-v1alpha1-Patch).
 
-!!! warning
+### Features
 
-    If the resource to be modified does not exist in the cluster, the step will fail.
+| Supported features                                 |                    |
+|----------------------------------------------------|:------------------:|
+| [Bindings](../general/bindings.md) support         | :white_check_mark: |
+| [Outputs](../general/outputs.md) support           | :white_check_mark: |
+| [Templating](../general/templating.md) support     | :white_check_mark: |
+| [Operation checks](../general/checks.md) support   | :white_check_mark: |
 
-## Usage examples
+## Examples
 
-Below is an example of using `patch` in a `Test` resource.
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - patch:
+        # use a specific file
+        file: my-configmap.yaml
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - patch:
+        # use glob pattern
+        file: "configs/*.yaml"
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - patch:
+        # use an URL
+        file: https://raw.githubusercontent.com/kyverno/chainsaw/main/testdata/resource/valid.yaml
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
+    - patch:
+        # specify resource inline
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: chainsaw-quick-start
+          data:
+            foo: bar
+```
 
-!!! example "Using a specific file"
+### Operation check
 
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example
-    spec:
-      steps:
-      - try:
-        # ...
-        - patch:
-            file: my-configmap.yaml
-        # ...
-    ```
-
-!!! example "Using file path expressions"
-
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example-multi
-    spec:
-      steps:
-      - try:
-        # ...
-        - patch:
-            file: "configs/*.yaml"
-        # ...
-    ```
-
-!!! example "Using an URL"
-
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example
-    spec:
-      steps:
-      - try:
-        # ...
-        - patch:
-            file: https://raw.githubusercontent.com/kyverno/chainsaw/main/testdata/resource/valid.yaml
-        # ...
-    ```
-
-!!! example "Using an inline resource"
-
-    ```yaml
-    apiVersion: chainsaw.kyverno.io/v1alpha1
-    kind: Test
-    metadata:
-      name: example
-    spec:
-      steps:
-      - try:
-        # ...
-        - patch:
-            resource:
-              apiVersion: v1
-              kind: ConfigMap
-              metadata:
-                name: chainsaw-quick-start
-              data:
-                foo: bar
-        # ...
-    ```
-
-## Operation check
-
-Below is an example of using an [operation check](./check.md#patch).
-
-!!! example "With check"
-
-    ```yaml
-    # ...
+```yaml
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: example
+spec:
+  steps:
+  - try:
     - patch:
         file: my-configmap.yaml
         expect:
@@ -109,31 +94,4 @@ Below is an example of using an [operation check](./check.md#patch).
             # - succeed if the operation failed
             # - fail if the operation succeeded
             ($error != null): true
-    # ...
-    ```
-
-!!! example "With check"
-
-    ```yaml
-    # ...
-    - patch:
-        resource:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: chainsaw-quick-start
-          data:
-            foo: bar
-        expect:
-        - match:
-            # this check applies only if the match
-            # statement below evaluates to `true`
-            apiVersion: v1
-            kind: ConfigMap
-          check:
-            # an error is expected, this will:
-            # - succeed if the operation failed
-            # - fail if the operation succeeded
-            ($error != null): true
-    # ...
-    ```
+```

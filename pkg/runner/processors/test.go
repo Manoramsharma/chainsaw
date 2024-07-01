@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	"github.com/jmespath-community/go-jmespath/pkg/binding"
 	"github.com/kyverno/chainsaw/pkg/apis/v1alpha1"
@@ -12,30 +13,34 @@ import (
 	"github.com/kyverno/chainsaw/pkg/report"
 	apibindings "github.com/kyverno/chainsaw/pkg/runner/bindings"
 	"github.com/kyverno/chainsaw/pkg/runner/cleanup"
+	"github.com/kyverno/chainsaw/pkg/runner/clusters"
+	"github.com/kyverno/chainsaw/pkg/runner/failer"
 	"github.com/kyverno/chainsaw/pkg/runner/logging"
 	"github.com/kyverno/chainsaw/pkg/runner/mutate"
 	"github.com/kyverno/chainsaw/pkg/runner/namespacer"
+	"github.com/kyverno/chainsaw/pkg/runner/operations"
 	opdelete "github.com/kyverno/chainsaw/pkg/runner/operations/delete"
 	"github.com/kyverno/chainsaw/pkg/runner/summary"
 	"github.com/kyverno/chainsaw/pkg/runner/timeout"
 	"github.com/kyverno/chainsaw/pkg/testing"
-	"github.com/kyverno/kyverno/ext/output/color"
+	"github.com/kyverno/pkg/ext/output/color"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/clock"
 )
 
 type TestProcessor interface {
 	Run(context.Context, binding.Bindings, namespacer.Namespacer)
-	CreateStepProcessor(namespacer.Namespacer, *cleaner, v1alpha1.TestStep) StepProcessor
+	CreateStepProcessor(namespacer.Namespacer, clusters.Registry, v1alpha1.TestStep) StepProcessor
 }
 
 func NewTestProcessor(
 	config v1alpha1.ConfigurationSpec,
-	clusters clusters,
+	clusters clusters.Registry,
 	clock clock.PassiveClock,
 	summary *summary.Summary,
-	testReport *report.TestReport,
+	report *report.TestReport,
 	test discovery.Test,
 	shouldFailFast *atomic.Bool,
 ) TestProcessor {
@@ -44,7 +49,7 @@ func NewTestProcessor(
 		clusters:       clusters,
 		clock:          clock,
 		summary:        summary,
-		testReport:     testReport,
+		report:         report,
 		test:           test,
 		shouldFailFast: shouldFailFast,
 		timeouts:       config.Timeouts.Combine(test.Spec.Timeouts),
@@ -53,10 +58,10 @@ func NewTestProcessor(
 
 type testProcessor struct {
 	config         v1alpha1.ConfigurationSpec
-	clusters       clusters
+	clusters       clusters.Registry
 	clock          clock.PassiveClock
 	summary        *summary.Summary
-	testReport     *report.TestReport
+	report         *report.TestReport
 	test           discovery.Test
 	shouldFailFast *atomic.Bool
 	timeouts       v1alpha1.Timeouts
@@ -67,12 +72,16 @@ func (p *testProcessor) Run(ctx context.Context, bindings binding.Bindings, nspa
 		bindings = binding.NewBindings()
 	}
 	t := testing.FromContext(ctx)
-	if p.testReport != nil {
+	if p.report != nil {
+		p.report.SetStartTime(time.Now())
 		t.Cleanup(func() {
+			p.report.SetEndTime(time.Now())
 			if t.Failed() {
-				p.testReport.NewFailure("test failed")
+				p.report.Fail()
 			}
-			p.testReport.MarkTestEnd()
+			if t.Skipped() {
+				p.report.Skip()
+			}
 		})
 	}
 	size := len("@cleanup")
@@ -109,12 +118,17 @@ func (p *testProcessor) Run(ctx context.Context, bindings binding.Bindings, nspa
 			t.SkipNow()
 		}
 	}
-	config, cluster := p.clusters.client(p.test.Spec.Cluster)
-	bindings = apibindings.RegisterClusterBindings(ctx, bindings, config, cluster)
+	registeredClusters := clusters.Register(p.clusters, p.test.BasePath, p.test.Spec.Clusters)
+	clusterConfig, clusterClient, err := registeredClusters.Resolve(false, p.test.Spec.Cluster)
+	if err != nil {
+		logging.Log(ctx, logging.Internal, logging.ErrorStatus, color.BoldRed, logging.ErrSection(err))
+		failer.FailNow(ctx)
+	}
+	bindings = apibindings.RegisterClusterBindings(ctx, bindings, clusterConfig, clusterClient)
 	setupLogger := logging.NewLogger(t, p.clock, p.test.Name, fmt.Sprintf("%-*s", size, "@setup"))
 	cleanupLogger := logging.NewLogger(t, p.clock, p.test.Name, fmt.Sprintf("%-*s", size, "@cleanup"))
 	var namespace *corev1.Namespace
-	if cluster != nil {
+	if clusterClient != nil {
 		if nspacer == nil || p.test.Spec.Namespace != "" {
 			var ns corev1.Namespace
 			if p.test.Spec.Namespace != "" {
@@ -132,20 +146,30 @@ func (p *testProcessor) Run(ctx context.Context, bindings binding.Bindings, nspa
 					Value: p.test.Spec.NamespaceTemplate.Value,
 				}
 				if merged, err := mutate.Merge(ctx, object, bindings, template); err != nil {
-					t.FailNow()
+					failer.FailNow(ctx)
+				} else {
+					object = merged
+				}
+				bindings = apibindings.RegisterNamedBinding(ctx, bindings, "namespace", object.GetName())
+			} else if p.config.NamespaceTemplate != nil && p.config.NamespaceTemplate.Value != nil {
+				template := v1alpha1.Any{
+					Value: p.config.NamespaceTemplate.Value,
+				}
+				if merged, err := mutate.Merge(ctx, object, bindings, template); err != nil {
+					failer.FailNow(ctx)
 				} else {
 					object = merged
 				}
 				bindings = apibindings.RegisterNamedBinding(ctx, bindings, "namespace", object.GetName())
 			}
-			nspacer = namespacer.New(cluster, object.GetName())
+			nspacer = namespacer.New(clusterClient, object.GetName())
 			setupCtx := logging.IntoContext(ctx, setupLogger)
 			cleanupCtx := logging.IntoContext(ctx, cleanupLogger)
-			if err := cluster.Get(setupCtx, client.ObjectKey(&object), object.DeepCopy()); err != nil {
+			if err := clusterClient.Get(setupCtx, client.ObjectKey(&object), object.DeepCopy()); err != nil {
 				if !errors.IsNotFound(err) {
 					// Get doesn't log
 					setupLogger.Log(logging.Get, logging.ErrorStatus, color.BoldRed, logging.ErrSection(err))
-					t.FailNow()
+					failer.FailNow(ctx)
 				}
 				if !cleanup.Skip(p.config.SkipDelete, p.test.Spec.SkipDelete, nil) {
 					t.Cleanup(func() {
@@ -153,35 +177,31 @@ func (p *testProcessor) Run(ctx context.Context, bindings binding.Bindings, nspa
 							OperationInfo{},
 							false,
 							timeout.Get(nil, p.timeouts.CleanupDuration()),
-							opdelete.New(cluster, object, nspacer, false),
+							func(ctx context.Context, bindings binding.Bindings) (operations.Operation, binding.Bindings, error) {
+								bindings = apibindings.RegisterClusterBindings(ctx, bindings, clusterConfig, clusterClient)
+								return opdelete.New(clusterClient, object, nspacer, false, metav1.DeletePropagationBackground), bindings, nil
+							},
 							nil,
-							config,
-							cluster,
 						)
 						operation.execute(cleanupCtx, bindings)
 					})
 				}
-				if err := cluster.Create(logging.IntoContext(setupCtx, setupLogger), object.DeepCopy()); err != nil {
-					t.FailNow()
+				if err := clusterClient.Create(logging.IntoContext(setupCtx, setupLogger), object.DeepCopy()); err != nil {
+					failer.FailNow(ctx)
 				}
 			}
 		}
 	}
-	bindings, err := apibindings.RegisterBindings(ctx, bindings, p.test.Spec.Bindings...)
+	if p.report != nil && nspacer != nil {
+		p.report.SetNamespace(nspacer.GetNamespace())
+	}
+	bindings, err = apibindings.RegisterBindings(ctx, bindings, p.test.Spec.Bindings...)
 	if err != nil {
 		logging.Log(ctx, logging.Internal, logging.ErrorStatus, color.BoldRed, logging.ErrSection(err))
-		t.FailNow()
+		failer.FailNow(ctx)
 	}
-	delay := p.config.DelayBeforeCleanup
-	if p.test.Spec.DelayBeforeCleanup != nil {
-		delay = p.test.Spec.DelayBeforeCleanup
-	}
-	cleaner := newCleaner(nspacer, delay)
-	t.Cleanup(func() {
-		cleaner.run(logging.IntoContext(ctx, cleanupLogger))
-	})
 	for i, step := range p.test.Spec.Steps {
-		processor := p.CreateStepProcessor(nspacer, cleaner, step)
+		processor := p.CreateStepProcessor(nspacer, registeredClusters, step)
 		name := step.Name
 		if name == "" {
 			name = fmt.Sprintf("step-%d", i+1)
@@ -193,11 +213,10 @@ func (p *testProcessor) Run(ctx context.Context, bindings binding.Bindings, nspa
 	}
 }
 
-func (p *testProcessor) CreateStepProcessor(nspacer namespacer.Namespacer, cleaner *cleaner, step v1alpha1.TestStep) StepProcessor {
-	var stepReport *report.TestSpecStepReport
-	if p.testReport != nil {
-		stepReport = report.NewTestSpecStep(step.Name)
-		p.testReport.AddTestStep(stepReport)
+func (p *testProcessor) CreateStepProcessor(nspacer namespacer.Namespacer, clusters clusters.Registry, step v1alpha1.TestStep) StepProcessor {
+	var report *report.StepReport
+	if p.report != nil {
+		report = p.report.ForStep(&step)
 	}
-	return NewStepProcessor(p.config, p.clusters, nspacer, p.clock, p.test, step, stepReport, cleaner)
+	return NewStepProcessor(p.config, clusters, nspacer, p.clock, p.test, step, report)
 }
